@@ -1,6 +1,10 @@
 import psutil
 import time
 import keyboard
+from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # Lista de nombres de aplicaciones a rastrear
 aplicaciones_a_rastrear = ["chrome.exe", "code.exe", "firefox.exe"]  # Puedes agregar más nombres según tus necesidades
@@ -26,6 +30,28 @@ def imprimir_tiempo_actividad(proceso_nombre):
     tiempo_actividad = obtener_tiempo_actividad(proceso_nombre)
     tiempo_formateado = formatear_tiempo(tiempo_actividad)
     print(f"Tiempo de actividad de {proceso_nombre}: {tiempo_formateado[0]} horas, {tiempo_formateado[1]} minutos, {tiempo_formateado[2]} segundos")
+
+def enviar_correo(destinatario, asunto, cuerpo):
+    # Configura los detalles del servidor SMTP (en este caso, para Gmail)
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    smtp_username = "rendimientopc22@gmail.com"
+    smtp_password = "vieh rqvm ryty bfdn"
+
+    # Configura el mensaje
+    mensaje = MIMEMultipart()
+    mensaje['From'] = smtp_username
+    mensaje['To'] = destinatario
+    mensaje['Subject'] = asunto
+
+    # Agrega el cuerpo del mensaje
+    mensaje.attach(MIMEText(cuerpo, 'plain'))
+
+    # Establece la conexión con el servidor SMTP y envía el mensaje
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(smtp_username, smtp_password)
+        server.sendmail(smtp_username, destinatario, mensaje.as_string())
 
 if __name__ == "__main__":
     print("Presiona Enter para obtener el tiempo de actividad de las aplicaciones. Presiona Ctrl+C para salir.")
@@ -67,3 +93,22 @@ if __name__ == "__main__":
         print("\nPrograma finalizado. Mostrando tiempos finales:")
         for proceso_nombre in tiempos_inicio_pausa:
             imprimir_tiempo_actividad(proceso_nombre)
+
+        # Agregar la fecha y hora de finalización
+        fecha_hora_fin = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"\nFecha y hora de finalización: {fecha_hora_fin}")
+
+        # Enviar correo electrónico con los tiempos finales y la fecha de finalización
+        destinatario_correo = "xavier22tobar@gmail.com"  # Coloca el correo del destinatario
+        asunto_correo = "Informe de Tiempos Finales"
+        cuerpo_correo = f"Programa finalizado. Tiempos finales:\n"
+        for proceso_nombre in tiempos_inicio_pausa:
+            tiempo_actividad = obtener_tiempo_actividad(proceso_nombre)
+            tiempo_formateado = formatear_tiempo(tiempo_actividad)
+            cuerpo_correo += f"Tiempo de actividad de {proceso_nombre}: {tiempo_formateado[0]} horas, {tiempo_formateado[1]} minutos, {tiempo_formateado[2]} segundos\n"
+
+        cuerpo_correo += f"\nFecha y hora de finalización: {fecha_hora_fin}"
+
+        enviar_correo(destinatario_correo, asunto_correo, cuerpo_correo)
+        # Confirma el envio del correo
+        print("\nSe ha enviado el correo electrónico correctamente")
